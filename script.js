@@ -53,8 +53,13 @@ function isFirebaseConfigured() {
 // Save appointments to Firebase (with localStorage fallback)
 function saveAppointments() {
     if (isFirebaseConfigured()) {
-        database.ref('appointments').set(appointments).catch(error => {
+        isSavingAppointments = true;
+        // Simply set the data - Firebase will sync to all devices via listeners
+        database.ref('appointments').set(appointments).then(() => {
+            isSavingAppointments = false;
+        }).catch(error => {
             console.error('Error saving appointments:', error);
+            isSavingAppointments = false;
             // Fallback to localStorage
             localStorage.setItem('appointments', JSON.stringify(appointments));
         });
@@ -68,9 +73,14 @@ function loadAppointments(callback) {
     if (isFirebaseConfigured()) {
         database.ref('appointments').once('value', (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                appointments.umar = data.umar || [];
-                appointments.samreen = data.samreen || [];
+            // Only update if data exists (don't overwrite with empty data)
+            if (data && (data.umar || data.samreen)) {
+                if (data.umar && data.umar.length > 0) {
+                    appointments.umar = data.umar;
+                }
+                if (data.samreen && data.samreen.length > 0) {
+                    appointments.samreen = data.samreen;
+                }
             }
             if (callback) callback();
         }).catch(error => {
@@ -95,10 +105,17 @@ function loadAppointments(callback) {
     }
 }
 
+// Flag to prevent listener from triggering during our own saves
+let isSavingAppointments = false;
+
 // Setup real-time listener for appointments
 function setupAppointmentsListener() {
     if (isFirebaseConfigured()) {
         database.ref('appointments').on('value', (snapshot) => {
+            // Don't update if we're currently saving (to prevent overwriting our own changes)
+            if (isSavingAppointments) {
+                return;
+            }
             const data = snapshot.val();
             if (data) {
                 appointments.umar = data.umar || [];
@@ -166,11 +183,18 @@ function setupPatientStatusListener() {
     }
 }
 
+// Flag to prevent listener from triggering during our own saves
+let isSavingYesterdayAppointments = false;
+
 // Save yesterday appointments to Firebase (with localStorage fallback)
 function saveYesterdayAppointments() {
     if (isFirebaseConfigured()) {
-        database.ref('yesterdayAppointments').set(yesterdayAppointments).catch(error => {
+        isSavingYesterdayAppointments = true;
+        database.ref('yesterdayAppointments').set(yesterdayAppointments).then(() => {
+            isSavingYesterdayAppointments = false;
+        }).catch(error => {
             console.error('Error saving yesterday appointments:', error);
+            isSavingYesterdayAppointments = false;
             localStorage.setItem('yesterdayAppointments', JSON.stringify(yesterdayAppointments));
         });
     } else {
@@ -183,9 +207,14 @@ function loadYesterdayAppointments(callback) {
     if (isFirebaseConfigured()) {
         database.ref('yesterdayAppointments').once('value', (snapshot) => {
             const data = snapshot.val();
-            if (data) {
-                yesterdayAppointments.umar = data.umar || [];
-                yesterdayAppointments.samreen = data.samreen || [];
+            // Only update if data exists (don't overwrite with empty data)
+            if (data && (data.umar || data.samreen)) {
+                if (data.umar && data.umar.length > 0) {
+                    yesterdayAppointments.umar = data.umar;
+                }
+                if (data.samreen && data.samreen.length > 0) {
+                    yesterdayAppointments.samreen = data.samreen;
+                }
             }
             if (callback) callback();
         }).catch(error => {
@@ -213,6 +242,10 @@ function loadYesterdayAppointments(callback) {
 function setupYesterdayAppointmentsListener() {
     if (isFirebaseConfigured()) {
         database.ref('yesterdayAppointments').on('value', (snapshot) => {
+            // Don't update if we're currently saving
+            if (isSavingYesterdayAppointments) {
+                return;
+            }
             const data = snapshot.val();
             if (data) {
                 yesterdayAppointments.umar = data.umar || [];
