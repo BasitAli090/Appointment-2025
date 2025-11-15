@@ -42,35 +42,113 @@ let editingYesterdayAppointment = {
     samreen: null
 };
 
+// ========== LOCALSTORAGE FUNCTIONS ==========
+// Save appointments to localStorage
+function saveAppointments() {
+    localStorage.setItem('appointments', JSON.stringify(appointments));
+}
+
+// Load appointments from localStorage
+function loadAppointments() {
+    const saved = localStorage.getItem('appointments');
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        appointments.umar = parsed.umar || [];
+        appointments.samreen = parsed.samreen || [];
+    }
+}
+
+// Save patient status to localStorage
+function savePatientStatus() {
+    localStorage.setItem('patientStatus', JSON.stringify(patientStatus));
+}
+
+// Load patient status from localStorage
+function loadPatientStatus() {
+    const saved = localStorage.getItem('patientStatus');
+    if (saved) {
+        patientStatus = JSON.parse(saved);
+    }
+}
+
+// Save yesterday appointments to localStorage
+function saveYesterdayAppointments() {
+    localStorage.setItem('yesterdayAppointments', JSON.stringify(yesterdayAppointments));
+}
+
+// Load yesterday appointments from localStorage
+function loadYesterdayAppointments() {
+    const saved = localStorage.getItem('yesterdayAppointments');
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        yesterdayAppointments.umar = parsed.umar || [];
+        yesterdayAppointments.samreen = parsed.samreen || [];
+    }
+}
+
+// Save yesterday patient status to localStorage
+function saveYesterdayPatientStatus() {
+    localStorage.setItem('yesterdayPatientStatus', JSON.stringify(yesterdayPatientStatus));
+}
+
+// Load yesterday patient status from localStorage
+function loadYesterdayPatientStatus() {
+    const saved = localStorage.getItem('yesterdayPatientStatus');
+    if (saved) {
+        yesterdayPatientStatus = JSON.parse(saved);
+    }
+}
+
 // Initialize frozen appointments on page load
 function initializeFrozenAppointments() {
-    // Dr Umar Farooq frozen appointments
+    // Load saved data first
+    loadAppointments();
+    loadPatientStatus();
+    loadYesterdayAppointments();
+    loadYesterdayPatientStatus();
+    
+    // Merge frozen appointments (only add if they don't exist)
     FROZEN_NUMBERS.umar.forEach(num => {
-        appointments.umar.push({
-            patientName: `Frozen Appointment ${num}`,
-            appointmentNo: num,
-            frozen: true
-        });
-        yesterdayAppointments.umar.push({
-            patientName: `Frozen Appointment ${num}`,
-            appointmentNo: num,
-            frozen: true
-        });
+        const exists = appointments.umar.some(apt => apt.appointmentNo === num && apt.frozen);
+        if (!exists) {
+            appointments.umar.push({
+                patientName: `Frozen Appointment ${num}`,
+                appointmentNo: num,
+                frozen: true
+            });
+        }
+        const yesterdayExists = yesterdayAppointments.umar.some(apt => apt.appointmentNo === num && apt.frozen);
+        if (!yesterdayExists) {
+            yesterdayAppointments.umar.push({
+                patientName: `Frozen Appointment ${num}`,
+                appointmentNo: num,
+                frozen: true
+            });
+        }
     });
 
-    // Dr Samreen Malik frozen appointments
     FROZEN_NUMBERS.samreen.forEach(num => {
-        appointments.samreen.push({
-            patientName: `Frozen Appointment ${num}`,
-            appointmentNo: num,
-            frozen: true
-        });
-        yesterdayAppointments.samreen.push({
-            patientName: `Frozen Appointment ${num}`,
-            appointmentNo: num,
-            frozen: true
-        });
+        const exists = appointments.samreen.some(apt => apt.appointmentNo === num && apt.frozen);
+        if (!exists) {
+            appointments.samreen.push({
+                patientName: `Frozen Appointment ${num}`,
+                appointmentNo: num,
+                frozen: true
+            });
+        }
+        const yesterdayExists = yesterdayAppointments.samreen.some(apt => apt.appointmentNo === num && apt.frozen);
+        if (!yesterdayExists) {
+            yesterdayAppointments.samreen.push({
+                patientName: `Frozen Appointment ${num}`,
+                appointmentNo: num,
+                frozen: true
+            });
+        }
     });
+    
+    // Save after merging frozen appointments
+    saveAppointments();
+    saveYesterdayAppointments();
 
     renderAppointments('umar');
     renderAppointments('samreen');
@@ -140,6 +218,10 @@ function addAppointment(doctor) {
     // Render appointments
     renderAppointments(doctor);
     
+    // Save to localStorage
+    saveAppointments();
+    savePatientStatus();
+    
     // Update patient list if modal is open
     if (document.getElementById('patient-list-modal').style.display === 'flex') {
         renderPatientList(doctor);
@@ -176,6 +258,10 @@ function saveEdit(doctor, index) {
     editingAppointment[doctor] = null;
     renderAppointments(doctor);
     
+    // Save to localStorage
+    saveAppointments();
+    savePatientStatus();
+    
     // Update patient list if modal is open
     if (document.getElementById('patient-list-modal').style.display === 'flex') {
         renderPatientList(doctor);
@@ -209,6 +295,10 @@ function clearTodayAppointments() {
             renderAppointments('umar');
             renderAppointments('samreen');
             
+            // Save to localStorage
+            saveAppointments();
+            savePatientStatus();
+            
             // Update patient list if modal is open
             if (document.getElementById('patient-list-modal').style.display === 'flex') {
                 renderPatientList('umar');
@@ -237,6 +327,10 @@ function deleteAppointment(doctor, index) {
     appointments[doctor].splice(index, 1);
     delete patientStatus[doctor][patientName];
     renderAppointments(doctor);
+    
+    // Save to localStorage
+    saveAppointments();
+    savePatientStatus();
     
     // Update patient list if modal is open
     if (document.getElementById('patient-list-modal').style.display === 'flex') {
@@ -423,6 +517,10 @@ function clearYesterdayAppointments() {
             renderYesterdayAppointments('umar');
             renderYesterdayAppointments('samreen');
             
+            // Save to localStorage
+            saveYesterdayAppointments();
+            saveYesterdayPatientStatus();
+            
             // Update patient list if view is open
             if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
                 renderYesterdayPatientList('umar');
@@ -468,6 +566,10 @@ function addYesterdayAppointment(doctor) {
     // Render appointments
     renderYesterdayAppointments(doctor);
     
+    // Save to localStorage
+    saveYesterdayAppointments();
+    saveYesterdayPatientStatus();
+    
     // Update patient list if view is open
     if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
         renderYesterdayPatientList(doctor);
@@ -503,6 +605,10 @@ function saveEditYesterday(doctor, index) {
     editingYesterdayAppointment[doctor] = null;
     renderYesterdayAppointments(doctor);
     
+    // Save to localStorage
+    saveYesterdayAppointments();
+    saveYesterdayPatientStatus();
+    
     // Update patient list if view is open
     if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
         renderYesterdayPatientList(doctor);
@@ -528,6 +634,10 @@ function deleteYesterdayAppointment(doctor, index) {
     yesterdayAppointments[doctor].splice(index, 1);
     delete yesterdayPatientStatus[doctor][patientName];
     renderYesterdayAppointments(doctor);
+    
+    // Save to localStorage
+    saveYesterdayAppointments();
+    saveYesterdayPatientStatus();
     
     // Update patient list if view is open
     if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
@@ -701,6 +811,7 @@ function toggleYesterdayPatientStatus(doctor, patientName) {
     }
     yesterdayPatientStatus[doctor][patientName] = !yesterdayPatientStatus[doctor][patientName];
     renderYesterdayPatientList(doctor);
+    saveYesterdayPatientStatus();
 }
 
 // Render yesterday patient list for a doctor
@@ -750,6 +861,7 @@ function togglePatientStatus(doctor, patientName) {
     }
     patientStatus[doctor][patientName] = !patientStatus[doctor][patientName];
     renderPatientList(doctor);
+    savePatientStatus();
 }
 
 // Render patient list for a doctor
