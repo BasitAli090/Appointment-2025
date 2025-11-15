@@ -53,13 +53,12 @@ function isFirebaseConfigured() {
 // Save appointments to Firebase (with localStorage fallback)
 function saveAppointments() {
     if (isFirebaseConfigured()) {
-        isSavingAppointments = true;
-        // Simply set the data - Firebase will sync to all devices via listeners
+        // Save to Firebase - this will trigger listeners on all devices
         database.ref('appointments').set(appointments).then(() => {
-            isSavingAppointments = false;
+            // Successfully saved to Firebase
+            console.log('Appointments saved to Firebase');
         }).catch(error => {
             console.error('Error saving appointments:', error);
-            isSavingAppointments = false;
             // Fallback to localStorage
             localStorage.setItem('appointments', JSON.stringify(appointments));
         });
@@ -101,33 +100,27 @@ function loadAppointments(callback) {
     }
 }
 
-// Flag to prevent listener from triggering during our own saves
-let isSavingAppointments = false;
+// Removed isSavingAppointments flag - listeners should always update to sync with all devices
 
 // Setup real-time listener for appointments
 function setupAppointmentsListener() {
     if (isFirebaseConfigured()) {
         database.ref('appointments').on('value', (snapshot) => {
-            // Don't update if we're currently saving (to prevent overwriting our own changes)
-            if (isSavingAppointments) {
-                return;
-            }
             const data = snapshot.val();
             if (data) {
+                // Always update from Firebase to get latest data from all devices
                 appointments.umar = data.umar || [];
                 appointments.samreen = data.samreen || [];
-            } else {
-                // If no data, keep current (might be empty arrays)
-                appointments.umar = appointments.umar || [];
-                appointments.samreen = appointments.samreen || [];
+                renderAppointments('umar');
+                renderAppointments('samreen');
+                // Update patient list if modal is open
+                if (document.getElementById('patient-list-modal').style.display === 'flex') {
+                    renderPatientList('umar');
+                    renderPatientList('samreen');
+                }
             }
-            renderAppointments('umar');
-            renderAppointments('samreen');
-            // Update patient list if modal is open
-            if (document.getElementById('patient-list-modal').style.display === 'flex') {
-                renderPatientList('umar');
-                renderPatientList('samreen');
-            }
+        }, (error) => {
+            console.error('Error in appointments listener:', error);
         });
     }
 }
@@ -183,18 +176,17 @@ function setupPatientStatusListener() {
     }
 }
 
-// Flag to prevent listener from triggering during our own saves
-let isSavingYesterdayAppointments = false;
+// Removed isSavingYesterdayAppointments flag - listeners should always update to sync with all devices
 
 // Save yesterday appointments to Firebase (with localStorage fallback)
 function saveYesterdayAppointments() {
     if (isFirebaseConfigured()) {
-        isSavingYesterdayAppointments = true;
+        // Save to Firebase - this will trigger listeners on all devices
         database.ref('yesterdayAppointments').set(yesterdayAppointments).then(() => {
-            isSavingYesterdayAppointments = false;
+            // Successfully saved to Firebase
+            console.log('Yesterday appointments saved to Firebase');
         }).catch(error => {
             console.error('Error saving yesterday appointments:', error);
-            isSavingYesterdayAppointments = false;
             localStorage.setItem('yesterdayAppointments', JSON.stringify(yesterdayAppointments));
         });
     } else {
@@ -238,25 +230,21 @@ function loadYesterdayAppointments(callback) {
 function setupYesterdayAppointmentsListener() {
     if (isFirebaseConfigured()) {
         database.ref('yesterdayAppointments').on('value', (snapshot) => {
-            // Don't update if we're currently saving
-            if (isSavingYesterdayAppointments) {
-                return;
-            }
             const data = snapshot.val();
             if (data) {
+                // Always update from Firebase to get latest data from all devices
                 yesterdayAppointments.umar = data.umar || [];
                 yesterdayAppointments.samreen = data.samreen || [];
-            } else {
-                yesterdayAppointments.umar = yesterdayAppointments.umar || [];
-                yesterdayAppointments.samreen = yesterdayAppointments.samreen || [];
+                renderYesterdayAppointments('umar');
+                renderYesterdayAppointments('samreen');
+                // Update patient list if view is open
+                if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
+                    renderYesterdayPatientList('umar');
+                    renderYesterdayPatientList('samreen');
+                }
             }
-            renderYesterdayAppointments('umar');
-            renderYesterdayAppointments('samreen');
-            // Update patient list if view is open
-            if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
-                renderYesterdayPatientList('umar');
-                renderYesterdayPatientList('samreen');
-            }
+        }, (error) => {
+            console.error('Error in yesterday appointments listener:', error);
         });
     }
 }
