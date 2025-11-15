@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Al Farooq Kidney Center</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions">
+            <h1>Al Farooq Kidney Center</h1>
+            <div class="header-buttons">
+                <button class="yesterday-appointment-btn" onclick="openYesterdayAppointments()">Yesterday Appointment</button>
+                <button class="patient-list-btn" onclick="openPatientList()">Patient List</button>
+                <button class="clear-today-btn" onclick="clearTodayAppointments()">Clear</button>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <!-- Dr Umar Farooq Section -->
+            <div class="doctor-section">
+                <h2>Dr Umar Farooq</h2>
+                <div class="add-appointment">
+                    <input type="text" id="umar-patient" placeholder="Patient Name" />
+                    <button onclick="addAppointment('umar')">Add Appointment</button>
+                </div>
+                <div class="appointments-list" id="umar-appointments"></div>
+            </div>
+
+            <!-- Dr Samreen Malik Section -->
+            <div class="doctor-section">
+                <h2>Dr Samreen Malik</h2>
+                <div class="add-appointment">
+                    <input type="text" id="samreen-patient" placeholder="Patient Name" />
+                    <button onclick="addAppointment('samreen')">Add Appointment</button>
+                </div>
+                <div class="appointments-list" id="samreen-appointments"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yesterday Appointment Modal -->
+    <div id="yesterday-appointment-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yesterday Appointment</h2>
+                <div class="modal-header-actions">
+                    <button class="yesterday-patient-list-btn" id="yesterday-patient-list-toggle" onclick="toggleYesterdayView()">Patient List</button>
+                    <button class="yesterday-clear-btn" onclick="clearYesterdayAppointments()">Clear</button>
+                    <button class="close-btn" onclick="closeYesterdayAppointments()">&times;</button>
+                </div>
+            </div>
+            <div class="yesterday-dashboard" id="yesterday-dashboard-view">
+                <!-- Dr Umar Farooq Section -->
+                <div class="doctor-section">
+                    <h2>Dr Umar Farooq</h2>
+                    <div class="add-appointment">
+                        <input type="text" id="yesterday-umar-patient" placeholder="Patient Name" />
+                        <button onclick="addYesterdayAppointment('umar')">Add Appointment</button>
+                    </div>
+                    <div class="appointments-list" id="yesterday-umar-appointments"></div>
+                </div>
+
+                <!-- Dr Samreen Malik Section -->
+                <div class="doctor-section">
+                    <h2>Dr Samreen Malik</h2>
+                    <div class="add-appointment">
+                        <input type="text" id="yesterday-samreen-patient" placeholder="Patient Name" />
+                        <button onclick="addYesterdayAppointment('samreen')">Add Appointment</button>
+                    </div>
+                    <div class="appointments-list" id="yesterday-samreen-appointments"></div>
+                </div>
+            </div>
+            <div class="yesterday-patient-list-container" id="yesterday-patient-list-view" style="display: none;">
+                <div class="patient-list-section">
+                    <h3>Dr Umar Farooq</h3>
+                    <div class="patient-list" id="yesterday-umar-patient-list"></div>
+                </div>
+                <div class="patient-list-section">
+                    <h3>Dr Samreen Malik</h3>
+                    <div class="patient-list" id="yesterday-samreen-patient-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient List Modal -->
+    <div id="patient-list-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Patient List</h2>
+                <button class="close-btn" onclick="closePatientList()">&times;</button>
+            </div>
+            <div class="patient-list-container">
+                <div class="patient-list-section">
+                    <h3>Dr Umar Farooq</h3>
+                    <div class="patient-list" id="umar-patient-list"></div>
+                </div>
+                <div class="patient-list-section">
+                    <h3>Dr Samreen Malik</h3>
+                    <div class="patient-list" id="samreen-patient-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
