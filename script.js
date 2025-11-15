@@ -42,118 +42,310 @@ let editingYesterdayAppointment = {
     samreen: null
 };
 
-// ========== LOCALSTORAGE FUNCTIONS ==========
-// Save appointments to localStorage
+// ========== FIREBASE FUNCTIONS ==========
+// Check if Firebase is configured
+function isFirebaseConfigured() {
+    return typeof firebase !== 'undefined' && 
+           typeof database !== 'undefined' && 
+           firebaseConfig.apiKey !== 'YOUR_API_KEY';
+}
+
+// Save appointments to Firebase (with localStorage fallback)
 function saveAppointments() {
-    localStorage.setItem('appointments', JSON.stringify(appointments));
-}
-
-// Load appointments from localStorage
-function loadAppointments() {
-    const saved = localStorage.getItem('appointments');
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        appointments.umar = parsed.umar || [];
-        appointments.samreen = parsed.samreen || [];
+    if (isFirebaseConfigured()) {
+        database.ref('appointments').set(appointments).catch(error => {
+            console.error('Error saving appointments:', error);
+            // Fallback to localStorage
+            localStorage.setItem('appointments', JSON.stringify(appointments));
+        });
+    } else {
+        localStorage.setItem('appointments', JSON.stringify(appointments));
     }
 }
 
-// Save patient status to localStorage
+// Load appointments from Firebase (with localStorage fallback)
+function loadAppointments(callback) {
+    if (isFirebaseConfigured()) {
+        database.ref('appointments').once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                appointments.umar = data.umar || [];
+                appointments.samreen = data.samreen || [];
+            }
+            if (callback) callback();
+        }).catch(error => {
+            console.error('Error loading appointments:', error);
+            // Fallback to localStorage
+            const saved = localStorage.getItem('appointments');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                appointments.umar = parsed.umar || [];
+                appointments.samreen = parsed.samreen || [];
+            }
+            if (callback) callback();
+        });
+    } else {
+        const saved = localStorage.getItem('appointments');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            appointments.umar = parsed.umar || [];
+            appointments.samreen = parsed.samreen || [];
+        }
+        if (callback) callback();
+    }
+}
+
+// Setup real-time listener for appointments
+function setupAppointmentsListener() {
+    if (isFirebaseConfigured()) {
+        database.ref('appointments').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                appointments.umar = data.umar || [];
+                appointments.samreen = data.samreen || [];
+                renderAppointments('umar');
+                renderAppointments('samreen');
+                // Update patient list if modal is open
+                if (document.getElementById('patient-list-modal').style.display === 'flex') {
+                    renderPatientList('umar');
+                    renderPatientList('samreen');
+                }
+            }
+        });
+    }
+}
+
+// Save patient status to Firebase (with localStorage fallback)
 function savePatientStatus() {
-    localStorage.setItem('patientStatus', JSON.stringify(patientStatus));
+    if (isFirebaseConfigured()) {
+        database.ref('patientStatus').set(patientStatus).catch(error => {
+            console.error('Error saving patient status:', error);
+            localStorage.setItem('patientStatus', JSON.stringify(patientStatus));
+        });
+    } else {
+        localStorage.setItem('patientStatus', JSON.stringify(patientStatus));
+    }
 }
 
-// Load patient status from localStorage
+// Load patient status from Firebase (with localStorage fallback)
 function loadPatientStatus() {
-    const saved = localStorage.getItem('patientStatus');
-    if (saved) {
-        patientStatus = JSON.parse(saved);
+    if (isFirebaseConfigured()) {
+        database.ref('patientStatus').once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                patientStatus = data;
+            }
+        }).catch(error => {
+            console.error('Error loading patient status:', error);
+            const saved = localStorage.getItem('patientStatus');
+            if (saved) {
+                patientStatus = JSON.parse(saved);
+            }
+        });
+    } else {
+        const saved = localStorage.getItem('patientStatus');
+        if (saved) {
+            patientStatus = JSON.parse(saved);
+        }
     }
 }
 
-// Save yesterday appointments to localStorage
+// Setup real-time listener for patient status
+function setupPatientStatusListener() {
+    if (isFirebaseConfigured()) {
+        database.ref('patientStatus').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                patientStatus = data;
+                if (document.getElementById('patient-list-modal').style.display === 'flex') {
+                    renderPatientList('umar');
+                    renderPatientList('samreen');
+                }
+            }
+        });
+    }
+}
+
+// Save yesterday appointments to Firebase (with localStorage fallback)
 function saveYesterdayAppointments() {
-    localStorage.setItem('yesterdayAppointments', JSON.stringify(yesterdayAppointments));
-}
-
-// Load yesterday appointments from localStorage
-function loadYesterdayAppointments() {
-    const saved = localStorage.getItem('yesterdayAppointments');
-    if (saved) {
-        const parsed = JSON.parse(saved);
-        yesterdayAppointments.umar = parsed.umar || [];
-        yesterdayAppointments.samreen = parsed.samreen || [];
+    if (isFirebaseConfigured()) {
+        database.ref('yesterdayAppointments').set(yesterdayAppointments).catch(error => {
+            console.error('Error saving yesterday appointments:', error);
+            localStorage.setItem('yesterdayAppointments', JSON.stringify(yesterdayAppointments));
+        });
+    } else {
+        localStorage.setItem('yesterdayAppointments', JSON.stringify(yesterdayAppointments));
     }
 }
 
-// Save yesterday patient status to localStorage
-function saveYesterdayPatientStatus() {
-    localStorage.setItem('yesterdayPatientStatus', JSON.stringify(yesterdayPatientStatus));
+// Load yesterday appointments from Firebase (with localStorage fallback)
+function loadYesterdayAppointments(callback) {
+    if (isFirebaseConfigured()) {
+        database.ref('yesterdayAppointments').once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                yesterdayAppointments.umar = data.umar || [];
+                yesterdayAppointments.samreen = data.samreen || [];
+            }
+            if (callback) callback();
+        }).catch(error => {
+            console.error('Error loading yesterday appointments:', error);
+            const saved = localStorage.getItem('yesterdayAppointments');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                yesterdayAppointments.umar = parsed.umar || [];
+                yesterdayAppointments.samreen = parsed.samreen || [];
+            }
+            if (callback) callback();
+        });
+    } else {
+        const saved = localStorage.getItem('yesterdayAppointments');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            yesterdayAppointments.umar = parsed.umar || [];
+            yesterdayAppointments.samreen = parsed.samreen || [];
+        }
+        if (callback) callback();
+    }
 }
 
-// Load yesterday patient status from localStorage
+// Setup real-time listener for yesterday appointments
+function setupYesterdayAppointmentsListener() {
+    if (isFirebaseConfigured()) {
+        database.ref('yesterdayAppointments').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                yesterdayAppointments.umar = data.umar || [];
+                yesterdayAppointments.samreen = data.samreen || [];
+                renderYesterdayAppointments('umar');
+                renderYesterdayAppointments('samreen');
+                // Update patient list if view is open
+                if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
+                    renderYesterdayPatientList('umar');
+                    renderYesterdayPatientList('samreen');
+                }
+            }
+        });
+    }
+}
+
+// Save yesterday patient status to Firebase (with localStorage fallback)
+function saveYesterdayPatientStatus() {
+    if (isFirebaseConfigured()) {
+        database.ref('yesterdayPatientStatus').set(yesterdayPatientStatus).catch(error => {
+            console.error('Error saving yesterday patient status:', error);
+            localStorage.setItem('yesterdayPatientStatus', JSON.stringify(yesterdayPatientStatus));
+        });
+    } else {
+        localStorage.setItem('yesterdayPatientStatus', JSON.stringify(yesterdayPatientStatus));
+    }
+}
+
+// Load yesterday patient status from Firebase (with localStorage fallback)
 function loadYesterdayPatientStatus() {
-    const saved = localStorage.getItem('yesterdayPatientStatus');
-    if (saved) {
-        yesterdayPatientStatus = JSON.parse(saved);
+    if (isFirebaseConfigured()) {
+        database.ref('yesterdayPatientStatus').once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                yesterdayPatientStatus = data;
+            }
+        }).catch(error => {
+            console.error('Error loading yesterday patient status:', error);
+            const saved = localStorage.getItem('yesterdayPatientStatus');
+            if (saved) {
+                yesterdayPatientStatus = JSON.parse(saved);
+            }
+        });
+    } else {
+        const saved = localStorage.getItem('yesterdayPatientStatus');
+        if (saved) {
+            yesterdayPatientStatus = JSON.parse(saved);
+        }
+    }
+}
+
+// Setup real-time listener for yesterday patient status
+function setupYesterdayPatientStatusListener() {
+    if (isFirebaseConfigured()) {
+        database.ref('yesterdayPatientStatus').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                yesterdayPatientStatus = data;
+                if (document.getElementById('yesterday-patient-list-view').style.display !== 'none') {
+                    renderYesterdayPatientList('umar');
+                    renderYesterdayPatientList('samreen');
+                }
+            }
+        });
     }
 }
 
 // Initialize frozen appointments on page load
 function initializeFrozenAppointments() {
-    // Load saved data first
-    loadAppointments();
+    // Load saved data first, then initialize
     loadPatientStatus();
-    loadYesterdayAppointments();
     loadYesterdayPatientStatus();
     
-    // Merge frozen appointments (only add if they don't exist)
-    FROZEN_NUMBERS.umar.forEach(num => {
-        const exists = appointments.umar.some(apt => apt.appointmentNo === num && apt.frozen);
-        if (!exists) {
-            appointments.umar.push({
-                patientName: `Frozen Appointment ${num}`,
-                appointmentNo: num,
-                frozen: true
-            });
-        }
-        const yesterdayExists = yesterdayAppointments.umar.some(apt => apt.appointmentNo === num && apt.frozen);
-        if (!yesterdayExists) {
-            yesterdayAppointments.umar.push({
-                patientName: `Frozen Appointment ${num}`,
-                appointmentNo: num,
-                frozen: true
-            });
-        }
-    });
+    loadAppointments(() => {
+        loadYesterdayAppointments(() => {
+            // Wait a bit for Firebase to load, then merge frozen appointments
+            setTimeout(() => {
+                // Merge frozen appointments (only add if they don't exist)
+                FROZEN_NUMBERS.umar.forEach(num => {
+                    const exists = appointments.umar.some(apt => apt.appointmentNo === num && apt.frozen);
+                    if (!exists) {
+                        appointments.umar.push({
+                            patientName: `Frozen Appointment ${num}`,
+                            appointmentNo: num,
+                            frozen: true
+                        });
+                    }
+                    const yesterdayExists = yesterdayAppointments.umar.some(apt => apt.appointmentNo === num && apt.frozen);
+                    if (!yesterdayExists) {
+                        yesterdayAppointments.umar.push({
+                            patientName: `Frozen Appointment ${num}`,
+                            appointmentNo: num,
+                            frozen: true
+                        });
+                    }
+                });
 
-    FROZEN_NUMBERS.samreen.forEach(num => {
-        const exists = appointments.samreen.some(apt => apt.appointmentNo === num && apt.frozen);
-        if (!exists) {
-            appointments.samreen.push({
-                patientName: `Frozen Appointment ${num}`,
-                appointmentNo: num,
-                frozen: true
-            });
-        }
-        const yesterdayExists = yesterdayAppointments.samreen.some(apt => apt.appointmentNo === num && apt.frozen);
-        if (!yesterdayExists) {
-            yesterdayAppointments.samreen.push({
-                patientName: `Frozen Appointment ${num}`,
-                appointmentNo: num,
-                frozen: true
-            });
-        }
-    });
-    
-    // Save after merging frozen appointments
-    saveAppointments();
-    saveYesterdayAppointments();
+                FROZEN_NUMBERS.samreen.forEach(num => {
+                    const exists = appointments.samreen.some(apt => apt.appointmentNo === num && apt.frozen);
+                    if (!exists) {
+                        appointments.samreen.push({
+                            patientName: `Frozen Appointment ${num}`,
+                            appointmentNo: num,
+                            frozen: true
+                        });
+                    }
+                    const yesterdayExists = yesterdayAppointments.samreen.some(apt => apt.appointmentNo === num && apt.frozen);
+                    if (!yesterdayExists) {
+                        yesterdayAppointments.samreen.push({
+                            patientName: `Frozen Appointment ${num}`,
+                            appointmentNo: num,
+                            frozen: true
+                        });
+                    }
+                });
+                
+                // Save after merging frozen appointments
+                saveAppointments();
+                saveYesterdayAppointments();
 
-    renderAppointments('umar');
-    renderAppointments('samreen');
-    renderYesterdayAppointments('umar');
-    renderYesterdayAppointments('samreen');
+                renderAppointments('umar');
+                renderAppointments('samreen');
+                renderYesterdayAppointments('umar');
+                renderYesterdayAppointments('samreen');
+                
+                // Setup real-time listeners
+                setupAppointmentsListener();
+                setupPatientStatusListener();
+                setupYesterdayAppointmentsListener();
+                setupYesterdayPatientStatusListener();
+            }, 500);
+        });
+    });
 }
 
 // ========== TODAY'S APPOINTMENT FUNCTIONS (Separate from Yesterday) ==========
